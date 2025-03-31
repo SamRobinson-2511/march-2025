@@ -125,7 +125,8 @@ m = MIDIOut(3); // Adjust to your MIDI device
 
 // Synth that converts envelope to MIDI CC
 SynthDef(\midiCCEnv, {
-    var env = EnvGen.kr(Env.perc(0.1, 0.6, 1.0), doneAction: 2);
+	|atk = 0.1, rel= 0.6, time=1.0|
+    var env = EnvGen.kr(Env.perc(atk, rel, time), doneAction: Done.freeSelf);
     var midiCC = (env * 127).clip(0, 127).round(1); // Scale to MIDI range
     SendReply.kr(Impulse.kr(20), '/envVal', midiCC); // Send data
 }).add;
@@ -135,16 +136,27 @@ SynthDef(\midiCCEnv, {
 (
 OSCdef(\envToCC, { |msg|
     var ccValue = msg[3].asInteger;
-    ~k1cc73 = m.control(0, 73, ccValue); // Sending to CC 1 on channel 0
+	~k1_cc12 = m.control(0, 12, ccValue); // Sending to CC 1 on channel 0
+	~rev500_revtime = m.control(15, 13, ccValue));
+	~rev500_hiratio = m.control(15, 14, ccValue);
+	~rev500_hiratio = m.control(15, 15, ccValue);
 }, '/envVal');
 )
 
 // Trigger the envelope
 (
-m.noteOn(0, 60, 127);
 x = Synth(\midiCCEnv);
+x.set([\atk, 0.1, \rel, 0.6, \time, 0.1]);
 )
 
+
+
+
+(
+p = Pbind(
+	\type, \midi,
+)
+)
 m.noteOff(0, 60);
 
 Env.perc(0.1, 0.5, 1.0).plot;
